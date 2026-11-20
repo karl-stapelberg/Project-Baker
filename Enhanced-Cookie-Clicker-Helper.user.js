@@ -35,6 +35,9 @@
         })
     }, 500);
 
+    // Auto pop reindeer
+    var autoReindeer = setInterval(function() { for (var h in Game.shimmers){if(Game.shimmers[h].type=="reindeer"){Game.shimmers[h].pop();}} }, 1000);
+
     // Auto click fortunes
     var fortuneclicker = setInterval(function() {
         if (Game.TickerEffect && Game.TickerEffect.type === 'fortune') {
@@ -87,9 +90,6 @@
             console.log("Fattest wrinkler successfully popped!");
         }
     }, 5000);
-
-    // Auto pop reindeer
-    var autoReindeer = setInterval(function() { for (var h in Game.shimmers){if(Game.shimmers[h].type=="reindeer"){Game.shimmers[h].pop();}} }, 1000);
 
     // Auto click ripe sugar lumps
     var autoLump = setInterval(function() {
