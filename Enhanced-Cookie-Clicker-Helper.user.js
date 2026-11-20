@@ -8,61 +8,20 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
+    (function() {
+        'use strict';
 
-    // Auto-click cookies (toggleable)
-    let autoClickEnabled = false;
-    setInterval(function() {
-        if (autoClickEnabled) Game.ClickCookie();
-    }, 4);
-
-    // UI toggle for auto-click
-    function createAutoClickToggle() {
-        const btn = document.createElement('button');
-        btn.id = 'autoClickToggle';
-        btn.style.cssText = [
-            'position:fixed',
-            'bottom:10px',
-            'left:10px',
-            'z-index:2147483647',
-            'padding:6px 12px',
-            'font:bold 13px Tahoma, Arial, sans-serif',
-            'color:#fff',
-            'border:2px solid #000',
-            'border-radius:6px',
-            'cursor:pointer',
-            'box-shadow:0 2px 6px rgba(0,0,0,0.6)'
-        ].join(';');
-
-        function refresh() {
-            btn.textContent = 'Auto-Click: ' + (autoClickEnabled ? 'ON' : 'OFF');
-            btn.style.background = autoClickEnabled ? '#2e8b2e' : '#a32a2a';
-        }
-
-        btn.addEventListener('click', function() {
-            autoClickEnabled = !autoClickEnabled;
-            refresh();
-        });
-
-        refresh();
-        document.body.appendChild(btn);
-    }
-
-    // Wait for the game to load before adding the button
-    (function waitForUI() {
-        if (typeof Game !== 'undefined' && Game.ready && document.body) {
-            createAutoClickToggle();
-        }
-        else {
-            setTimeout(waitForUI, 500);
-        }
-    })();
+        // Auto-click cookies (toggleable)
+        let autoClickEnabled = false;
+        setInterval(function() {
+            if (autoClickEnabled) Game.ClickCookie();
+        }, 4);
 
     // Pop golden cookies (non-wrath) and wrath cookies during grandmapocalypse (but only when there is a reindeer on screen for the last part)
+    let goldenClickEnabled = true;
     setInterval(function() {
-        Game.shimmers.forEach(function(shimmer)
-        {
+        if (!goldenClickEnabled) return;
+        Game.shimmers.forEach(function(shimmer) {
             // Pop golden cookies (wrath == 0)
             if(shimmer.type == "golden" && shimmer.wrath == 0)
             {
@@ -139,6 +98,78 @@
             Game.clickLump();
         }
     }, 1000);
+
+        // UI toggles
+    function createToggle(container, label, getState, setState, hotkey) {
+        const btn = document.createElement('button');
+        btn.style.cssText = [
+            'padding:6px 12px',
+            'font:bold 13px Tahoma, Arial, sans-serif',
+            'color:#fff',
+            'border:2px solid #000',
+            'border-radius:6px',
+            'cursor:pointer',
+            'box-shadow:0 2px 6px rgba(0,0,0,0.6)',
+            'text-align:left'
+        ].join(';');
+
+        function refresh() {
+            const on = getState();
+            btn.textContent = label + ': ' + (on ? 'ON' : 'OFF');
+            btn.style.background = on ? '#2e8b2e' : '#a32a2a';
+        }
+
+        function toggle() {
+            setState(!getState());
+            refresh();
+        }
+
+        btn.addEventListener('click', toggle);
+
+        if (hotkey) {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === hotkey) toggle();
+            });
+        }
+
+        refresh();
+        container.appendChild(btn);
+    }
+
+    function createToggleUI() {
+        const container = document.createElement('div');
+        container.id = 'helperToggles';
+        container.style.cssText = [
+            'position:fixed',
+            'bottom:10px',
+            'left:10px',
+            'z-index:2147483647',
+            'display:flex',
+            'flex-direction:column',
+            'gap:6px'
+        ].join(';');
+
+        createToggle(container, 'Auto-Click',
+            () => autoClickEnabled,
+            (v) => { autoClickEnabled = v; },
+            null);
+
+        createToggle(container, 'Golden/Wrath Cookies',
+            () => goldenClickEnabled,
+            (v) => { goldenClickEnabled = v; },
+            null);
+
+        document.body.appendChild(container);
+    }
+
+    // Wait for the game to load before adding the buttons
+    (function waitForUI() {
+        if (typeof Game !== 'undefined' && Game.ready && document.body) {
+            createToggleUI();
+        } else {
+            setTimeout(waitForUI, 500);
+        }
+    })();
 
     // Auto Force the Hand of Fate
     const CHECK_INTERVAL_MS = 250;
