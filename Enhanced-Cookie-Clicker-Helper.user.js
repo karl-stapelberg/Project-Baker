@@ -1,9 +1,8 @@
 // ==UserScript==
 // @name         Enhanced Cookie Clicker Helper
-// @namespace    https://github.com/karl-stapelberg/Project-Baker
+// @namespace    https://github.com/karl-stapelberg/
 // @version      1.0.0
-// @description  An enhanced version of petar105's "Cookie Clicker Helper" script that adds auto-popping wrinklers, auto-clicking fortunes, auto-clicking of wrath cookies during the Grandmapocalypse (only when reindeers are on screen), and auto-collection of ripe sugar lumps.
-// @author       karl-stapelberg
+// @description  An enhanced version of petar105's "Cookie Clicker Helper" script that adds auto-popping wrinklers, auto-clicking fortunes, auto-clicking of wrath cookies during the Grandmapocalypse (only when reindeers are on screen), auto-collection of ripe sugar lumps, and Auto Force the Hand of Fate when a combo-worthy buff is active.
 // @match        https://orteil.dashnet.org/cookieclicker/
 // @icon         https://www.google.com/s2/favicons?domain=dashnet.org
 // @grant        none
@@ -94,4 +93,109 @@
             Game.clickLump();
         }
     }, 1000);
+
+    // Auto Force the Hand of Fate
+    const CHECK_INTERVAL_MS = 250;
+
+    const NOTIFY_ON_CAST = true;
+
+    const COMBO_BUFF_NAMES = new Set([
+        'frenzy',
+        'dragon harvest',
+        'elder frenzy',
+        'click frenzy',
+    ]);
+
+    // State
+    let loopHandle = null;
+
+    // Returns the Grimoire minigame object, or null if it isn't loaded yet.
+    function getGrimoire() {
+        try {
+            const wt = Game.ObjectsById[7];
+            return (wt && wt.minigame) ? wt.minigame : null;
+        }
+        catch (e) {
+            return null;
+        }
+    }
+
+    // Searches for buffs that are worth comboing into FtHoF. Returns true if at least one is found.
+    function hasComboTriggerBuff() {
+        for (const name in Game.buffs) {
+            const buff = Game.buffs[name];
+            if (COMBO_BUFF_NAMES.has(name.toLowerCase())) return true;
+            // Catch building specials with dynamic names not covered by the set above.
+            if (buff.multCpS > 1) return true;
+        }
+        return false;
+    }
+
+    // Returns true when the magic meter is completely full. Uses a small epsilon to avoid floating-point rounding issues.
+    function isAtMaxMana(grimoire) {
+        return grimoire.magic >= grimoire.magicM - 0.01;
+    }
+
+    //Returns true if the magic meter holds enough to cast FtHoF AND will still have at least 1 point left over after the cast (avoids 0-magic regen freeze).
+    function canAffordFtHoF(grimoire) {
+        const spell = grimoire.spells['hand of fate'];
+        if (!spell) return false;
+        const cost = spell.costMin + grimoire.magicM * spell.costPercent;
+        return grimoire.magic >= cost + 1;
+    }
+
+    // Casts Force the Hand of Fate
+    function castFtHoF(grimoire) {
+        const spell = grimoire.spells['hand of fate'];
+        if (!spell) return false;
+
+        const result = grimoire.castSpell(spell);
+
+        if (result !== false && NOTIFY_ON_CAST) {
+            Game.Notify('Force the Hand of Fate cast.', 'Spell fired during active buff –', [16, 5]);
+        }
+        return result !== false;
+    }
+
+    // Sanity checks and main loop.
+    function tick() {
+        // Game must be fully loaded.
+        if (typeof Game === 'undefined' || !Game.ready) return;
+
+        // Grimoire must be available.
+        const grimoire = getGrimoire();
+        if (!grimoire) return;
+
+        // Only cast while at full mana.
+        if (!isAtMaxMana(grimoire)) return;
+
+        // Only cast while a combo-worthy buff is active.
+        if (!hasComboTriggerBuff()) return;
+
+        // Confirm we can actually afford the spell.
+        if (!canAffordFtHoF(grimoire)) return;
+
+        // Cast the spell and log the event.
+        const success = castFtHoF(grimoire);
+        if (success) {
+            console.log('[FtHoF AutoCast] Cast during buff at',new Date().toLocaleTimeString(),'| Active buffs:',Object.keys(Game.buffs).join(', '));
+        }
+    }
+  
+    // Waits for the game to be ready before starting the main loop.
+    function waitForGame() {
+        if (typeof Game !== 'undefined' && Game.ready) {
+            console.log('[FtHoF AutoCast] Game ready – starting buff-triggered loop.');
+            loopHandle = setInterval(tick, CHECK_INTERVAL_MS);
+            }
+        else {
+            setTimeout(waitForGame, 1000);
+        }
+    }
+
+    waitForGame();
+
+    window.addEventListener('beforeunload', () => {
+        if (loopHandle) clearInterval(loopHandle);
+    });
 })();
