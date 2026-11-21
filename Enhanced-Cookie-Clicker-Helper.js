@@ -1,13 +1,3 @@
-// ==UserScript==
-// @name         Enhanced Cookie Clicker Helper
-// @namespace    https://github.com/karl-stapelberg/
-// @version      1.0.0
-// @description  An enhanced version of petar105's "Cookie Clicker Helper" script that adds auto-popping wrinklers, auto-clicking fortunes, auto-clicking of wrath cookies during the Grandmapocalypse (only when reindeers are on screen), auto-collection of ripe sugar lumps, and Auto Force the Hand of Fate when a combo-worthy buff is active.
-// @match        https://orteil.dashnet.org/cookieclicker/
-// @icon         https://www.google.com/s2/favicons?domain=dashnet.org
-// @grant        none
-// ==/UserScript==
-
     (function() {
         'use strict';
 
@@ -99,7 +89,7 @@
         }
     }, 1000);
 
-        // UI toggles
+    // UI toggles
     function createToggle(container, label, getState, setState, hotkey) {
         const btn = document.createElement('button');
         btn.style.cssText = [
@@ -161,15 +151,6 @@
 
         document.body.appendChild(container);
     }
-
-    // Wait for the game to load before adding the buttons
-    (function waitForUI() {
-        if (typeof Game !== 'undefined' && Game.ready && document.body) {
-            createToggleUI();
-        } else {
-            setTimeout(waitForUI, 500);
-        }
-    })();
 
     // Auto Force the Hand of Fate
     const CHECK_INTERVAL_MS = 250;
@@ -258,21 +239,4 @@
             console.log('[FtHoF AutoCast] Cast during buff at',new Date().toLocaleTimeString(),'| Active buffs:',Object.keys(Game.buffs).join(', '));
         }
     }
-  
-    // Waits for the game to be ready before starting the main loop.
-    function waitForGame() {
-        if (typeof Game !== 'undefined' && Game.ready) {
-            console.log('[FtHoF AutoCast] Game ready – starting buff-triggered loop.');
-            loopHandle = setInterval(tick, CHECK_INTERVAL_MS);
-            }
-        else {
-            setTimeout(waitForGame, 1000);
-        }
-    }
-
-    waitForGame();
-
-    window.addEventListener('beforeunload', () => {
-        if (loopHandle) clearInterval(loopHandle);
-    });
 })();
