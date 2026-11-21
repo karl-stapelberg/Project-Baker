@@ -24,12 +24,12 @@
         init: function () {
             const mod = this;
 
-            // Auto-click the big cookie.
+            // Auto-click the big cookie
             mod.autoClickHandle = setInterval(function () {
                 if (mod.settings.autoClick) Game.ClickCookie();
             }, 4);
 
-            // All other automation runs on the game's own logic tick.
+            // All other automation runs on the game's own logic tick
             Game.registerHook('logic', function () {
                 mod.ticks++;
                 if (mod.ticks % 8 === 0)   mod.tickFtHoF();
@@ -47,15 +47,17 @@
             Game.Notify(MOD_ID + ' loaded', '', [16, 5], 4);
             console.log('[' + MOD_ID + '] initialised.');
         },
-
+        
+        // Saves settings
         save: function () {
             return JSON.stringify(this.settings);
         },
 
+        // Loads settings
         load: function (str) {
             try {
                 const data = JSON.parse(str);
-                if (typeof data.autoClick === 'boolean')   this.settings.autoClick = data.autoClick;
+                if (typeof data.autoClick === 'boolean') this.settings.autoClick = data.autoClick;
                 if (typeof data.goldenClick === 'boolean') this.settings.goldenClick = data.goldenClick;
             } catch (e) {
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
@@ -138,7 +140,8 @@
                 return null;
             }
         },
-
+        
+        // Checks if any active buff is a combo trigger for Force the Hand of Fate.
         hasComboTriggerBuff: function () {
             for (const name in Game.buffs) {
                 const buff = Game.buffs[name];
@@ -149,6 +152,7 @@
             return false;
         },
 
+        // Checks if the grimoire is at max mana (or very close to it).
         isAtMaxMana: function (grimoire) {
             return grimoire.magic >= grimoire.magicM - 0.01;
         },
@@ -162,7 +166,8 @@
                 : spell.costMin + grimoire.magicM * spell.costPercent;
             return grimoire.magic >= cost + 1;
         },
-
+        
+        // Invokes Force the Hand of Fate
         tickFtHoF: function () {
             const grimoire = this.getGrimoire();
             if (!grimoire) return;
