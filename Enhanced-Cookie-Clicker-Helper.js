@@ -3,14 +3,6 @@
 (function () {
     const MOD_ID = 'Enhanced Cookie Clicker Helper';
 
-    if (typeof Game === 'undefined') return;
-
-    // Guard against the script being loaded twice
-    if (Game.mods && Game.mods[MOD_ID]) {
-        console.log('[' + MOD_ID + '] already loaded, skipping.');
-        return;
-    }
-
     Game.registerMod(MOD_ID, {
 
         // ---------- State (persisted via save/load) ----------
