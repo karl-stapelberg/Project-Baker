@@ -152,6 +152,15 @@
         document.body.appendChild(container);
     }
 
+    // Wait for the game to load before adding the buttons
+    (function waitForUI() {
+        if (typeof Game !== 'undefined' && Game.ready && document.body) {
+            createToggleUI();
+        } else {
+            setTimeout(waitForUI, 500);
+        }
+    })();
+
     // Auto Force the Hand of Fate
     const CHECK_INTERVAL_MS = 250;
 
@@ -239,4 +248,21 @@
             console.log('[FtHoF AutoCast] Cast during buff at',new Date().toLocaleTimeString(),'| Active buffs:',Object.keys(Game.buffs).join(', '));
         }
     }
+  
+    // Waits for the game to be ready before starting the main loop.
+    function waitForGame() {
+        if (typeof Game !== 'undefined' && Game.ready) {
+            console.log('[FtHoF AutoCast] Game ready – starting buff-triggered loop.');
+            loopHandle = setInterval(tick, CHECK_INTERVAL_MS);
+            }
+        else {
+            setTimeout(waitForGame, 1000);
+        }
+    }
+
+    waitForGame();
+
+    window.addEventListener('beforeunload', () => {
+        if (loopHandle) clearInterval(loopHandle);
+    });
 })();
