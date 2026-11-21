@@ -1,46 +1,45 @@
 // Enhanced Cookie Clicker Helper
-// Load with:  Game.LoadMod('https://your-host/Enhanced-Cookie-Clicker-Helper.js');
+// Load with: Game.LoadMod('https://cdn.jsdelivr.net/gh/karl-stapelberg/Project-Baker@main/Enhanced-Cookie-Clicker-Helper.js');
 (function () {
     const MOD_ID = 'Enhanced Cookie Clicker Helper';
 
     Game.registerMod(MOD_ID, {
 
-        // ---------- State (persisted via save/load) ----------
+        // State (persisted via save/load)
         settings: {
             autoClick: false,
             goldenClick: true
         },
 
-        // ---------- Config ----------
+        // Config
         NOTIFY_ON_CAST: true,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
 
-        // ---------- Internals ----------
+        // Internals
         ticks: 0,
         autoClickHandle: null,
         toggleButtons: [],
 
-        // ---------- Mod lifecycle ----------
+        // Mod lifecycle
         init: function () {
             const mod = this;
 
-            // Auto-click the big cookie. The game itself caps clicks at ~250/s, so 4ms matches that.
-            // (Kept as a real-time interval because the logic hook only runs ~30x per second.)
+            // Auto-click the big cookie.
             mod.autoClickHandle = setInterval(function () {
                 if (mod.settings.autoClick) Game.ClickCookie();
             }, 4);
 
-            // All other automation runs on the game's own logic tick (~30 ticks per second)
+            // All other automation runs on the game's own logic tick.
             Game.registerHook('logic', function () {
                 mod.ticks++;
-                if (mod.ticks % 8 === 0)   mod.tickFtHoF();         // ~250 ms
-                if (mod.ticks % 15 === 0)  mod.tickGolden();        // ~500 ms
-                if (mod.ticks % 30 === 0) {                         // ~1 s
+                if (mod.ticks % 8 === 0)   mod.tickFtHoF();
+                if (mod.ticks % 15 === 0)  mod.tickGolden();
+                if (mod.ticks % 30 === 0) {
                     mod.tickReindeer();
                     mod.tickFortune();
                     mod.tickLump();
                 }
-                if (mod.ticks % 150 === 0) mod.tickWrinklers();     // ~5 s
+                if (mod.ticks % 150 === 0) mod.tickWrinklers();
             });
 
             mod.createToggleUI();
@@ -64,13 +63,11 @@
             this.toggleButtons.forEach(function (refresh) { refresh(); });
         },
 
-        // ---------- Golden / wrath cookies ----------
-        // Pops golden cookies, and wrath cookies during grandmapocalypse
-        // (only while a reindeer is on screen for the wrath case).
+        // Pops golden cookies, and wrath cookies during grandmapocalypse (only while a reindeer is on screen for the wrath case).
         tickGolden: function () {
             if (!this.settings.goldenClick) return;
 
-            const shimmers = Game.shimmers.slice(); // copy: popping mutates the array
+            const shimmers = Game.shimmers.slice();
             const reindeerOnScreen = shimmers.some(function (s) { return s.type === 'reindeer'; });
 
             shimmers.forEach(function (shimmer) {
@@ -83,14 +80,14 @@
             });
         },
 
-        // ---------- Reindeer ----------
+        // Auto pops reindeer
         tickReindeer: function () {
             Game.shimmers.slice().forEach(function (shimmer) {
                 if (shimmer.type === 'reindeer') shimmer.pop();
             });
         },
 
-        // ---------- Fortune news ticker ----------
+        // Auto collects fortunes from the news ticker
         tickFortune: function () {
             if (Game.TickerEffect && Game.TickerEffect.type === 'fortune' && Game.tickerL) {
                 Game.tickerL.click();
@@ -98,8 +95,7 @@
             }
         },
 
-        // ---------- Wrinklers ----------
-        // Pops the fattest non-shiny wrinkler once every wrinkler slot is in use.
+        // Pops the fattest non-shiny wrinkler once every wrinkler slot is in use
         tickWrinklers: function () {
             const max = (typeof Game.getWrinklersMax === 'function') ? Game.getWrinklersMax() : 10;
 
@@ -125,7 +121,7 @@
             }
         },
 
-        // ---------- Sugar lumps ----------
+        // Auto collects sugar lumps while ripe
         tickLump: function () {
             if (typeof Game.canLumps === 'function' && !Game.canLumps()) return;
             if (Date.now() - Game.lumpT >= Game.lumpRipeAge) {
@@ -133,7 +129,7 @@
             }
         },
 
-        // ---------- Force the Hand of Fate ----------
+        // Auto Force the Hand of Fate
         getGrimoire: function () {
             try {
                 const wt = Game.ObjectsById[7];
@@ -186,7 +182,7 @@
             }
         },
 
-        // ---------- UI ----------
+        // UI
         createToggle: function (container, label, getState, setState, hotkey) {
             const btn = document.createElement('button');
             btn.style.cssText = [
@@ -221,7 +217,7 @@
 
             refresh();
             container.appendChild(btn);
-            this.toggleButtons.push(refresh); // so load() can refresh the labels
+            this.toggleButtons.push(refresh);
         },
 
         createToggleUI: function () {
