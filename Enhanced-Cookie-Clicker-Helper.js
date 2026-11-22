@@ -17,8 +17,8 @@
 
         // Config
         NOTIFY_ON_CAST: false,
-        GOLDEN_LAST_SECOND: 1,
-        REINDEER_EXIT_MARGIN: 1,
+        GOLDEN_LAST_SECOND: 2,
+        REINDEER_EXIT_MARGIN: 2,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
 
         // Internals
