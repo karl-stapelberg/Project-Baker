@@ -242,7 +242,8 @@
             container.id = 'helperToggles';
             container.style.cssText = [
                 'position:fixed',
-                'bottom:10px',
+                'top:50%',
+                'transform: translateY(-50%)',
                 'left:10px',
                 'z-index:2147483647',
                 'display:flex',
