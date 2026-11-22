@@ -136,7 +136,7 @@
             if (!s.reindeerClick && !s.deermaxClick) return;
 
             // Wait mode: hold reindeer while any golden/wrath cookie is on screen
-            const hold = s.deermaxClick && !this.cpsBuffActive() && this.goldenPending();
+            const hold = s.deermaxClick && !this.cpsBuffActive();
             const margin = this.REINDEER_EXIT_MARGIN;
 
             Game.shimmers.slice().forEach(function (shimmer) {
