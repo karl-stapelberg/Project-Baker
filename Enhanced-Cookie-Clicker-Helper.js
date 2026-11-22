@@ -3,16 +3,27 @@
 (function () {
     const MOD_ID = 'Enhanced Cookie Clicker Helper';
 
+    // Wait until the game exists and has finished loading
+    (function waitForGame() {
+        if (typeof Game !== 'undefined' && Game.ready && document.body) {
+            register();
+        } else {
+            setTimeout(waitForGame, 500);
+        }
+    })();
+
     Game.registerMod(MOD_ID, {
 
         // State (persisted via save/load)
         settings: {
             autoClick: false,
-            goldenClick: true
+            goldenClick: true,
+            wrathClick: false,
+            fthofEnabled: true
         },
 
         // Config
-        NOTIFY_ON_CAST: true,
+        NOTIFY_ON_CAST: false,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
 
         // Internals
@@ -32,8 +43,8 @@
             // All other automation runs on the game's own logic tick
             Game.registerHook('logic', function () {
                 mod.ticks++;
-                if (mod.ticks % 8 === 0)   mod.tickFtHoF();
-                if (mod.ticks % 15 === 0)  mod.tickGolden();
+                if (mod.ticks % 8 === 0) mod.tickFtHoF();
+                if (mod.ticks % 15 === 0) mod.tickGolden();
                 if (mod.ticks % 30 === 0) {
                     mod.tickReindeer();
                     mod.tickFortune();
@@ -57,8 +68,10 @@
         load: function (str) {
             try {
                 const data = JSON.parse(str);
-                if (typeof data.autoClick === 'boolean') this.settings.autoClick = data.autoClick;
+                if (typeof data.autoClick === 'boolean')   this.settings.autoClick = data.autoClick;
                 if (typeof data.goldenClick === 'boolean') this.settings.goldenClick = data.goldenClick;
+                if (typeof data.wrathClick === 'boolean')  this.settings.wrathClick = data.wrathClick;
+                if (typeof data.fthofEnabled === 'boolean') this.settings.fthofEnabled = data.fthofEnabled;
             } catch (e) {
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
             }
@@ -67,16 +80,18 @@
 
         // Pops golden cookies, and wrath cookies during grandmapocalypse (only while a reindeer is on screen for the wrath case).
         tickGolden: function () {
-            if (!this.settings.goldenClick) return;
+            const popGolden = this.settings.goldenClick;
+            const popWrath = this.settings.wrathClick;
+            if (!popGolden && !popWrath) return;
 
-            const shimmers = Game.shimmers.slice();
+            const shimmers = Game.shimmers.slice(); // copy: popping mutates the array
             const reindeerOnScreen = shimmers.some(function (s) { return s.type === 'reindeer'; });
 
             shimmers.forEach(function (shimmer) {
                 if (shimmer.type !== 'golden') return;
                 if (shimmer.wrath === 0) {
-                    shimmer.pop();
-                } else if (Game.elderWrath > 0 && reindeerOnScreen) {
+                    if (popGolden) shimmer.pop();
+                } else if (popWrath && Game.elderWrath > 0 && reindeerOnScreen) {
                     shimmer.pop();
                 }
             });
@@ -169,6 +184,7 @@
         
         // Invokes Force the Hand of Fate
         tickFtHoF: function () {
+            if (!this.settings.fthofEnabled) return;
             const grimoire = this.getGrimoire();
             if (!grimoire) return;
             if (!this.isAtMaxMana(grimoire)) return;
@@ -251,6 +267,16 @@
             mod.createToggle(container, 'Golden/Wrath Cookies',
                 function () { return mod.settings.goldenClick; },
                 function (v) { mod.settings.goldenClick = v; },
+                null);
+
+            mod.createToggle(container, 'Wrath Cookies',
+                function () { return mod.settings.wrathClick; },
+                function (v) { mod.settings.wrathClick = v; },
+                null);
+
+            mod.createToggle(container, 'Auto FtHoF',
+                function () { return mod.settings.fthofEnabled; },
+                function (v) { mod.settings.fthofEnabled = v; },
                 null);
 
             document.body.appendChild(container);
