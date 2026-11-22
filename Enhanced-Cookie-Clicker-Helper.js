@@ -129,7 +129,7 @@
             if (!s.reindeerClick && !s.deermaxClick) return;
 
             // Wait mode: hold reindeer while any golden/wrath cookie is on screen
-            const hold = s.deermaxClick && this.goldenPending();
+            const hold = s.deermaxClick && !this.cpsBuffActive() && this.goldenPending();
             const margin = this.REINDEER_EXIT_MARGIN;
 
             Game.shimmers.slice().forEach(function (shimmer) {
@@ -192,7 +192,7 @@
         },
         
         // Checks if any active buff is a combo trigger for Force the Hand of Fate.
-        hasComboTriggerBuff: function () {
+        cpsBuffActive: function () {
             for (const name in Game.buffs) {
                 const buff = Game.buffs[name];
                 if (this.COMBO_BUFF_NAMES.has(name.toLowerCase())) return true;
@@ -223,7 +223,7 @@
             const grimoire = this.getGrimoire();
             if (!grimoire) return;
             if (!this.isAtMaxMana(grimoire)) return;
-            if (!this.hasComboTriggerBuff()) return;
+            if (!this.cpsBuffActive()) return;
             if (!this.canAffordFtHoF(grimoire)) return;
 
             const spell = grimoire.spells['hand of fate'];
