@@ -12,11 +12,13 @@
             wrathClick: false,
             fthofEnabled: true,
             reindeerClick: true,
-            eldeerClick: false
+            deermaxClick: false
         },
 
         // Config
         NOTIFY_ON_CAST: false,
+        GOLDEN_LAST_SECOND: 1,
+        REINDEER_EXIT_MARGIN: 1,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
 
         // Internals
@@ -36,14 +38,17 @@
             // All other automation runs on the game's own logic tick
             Game.registerHook('logic', function () {
                 mod.ticks++;
-                if (mod.ticks % 8 === 0) mod.tickFtHoF();
-                if (mod.ticks % 15 === 0) mod.tickGolden();
-                if (mod.ticks % 30 === 0) {
+                if (mod.ticks % 3 === 0) {
+                    mod.tickGolden(); 
                     mod.tickReindeer();
+                }
+                if (mod.ticks % 8 === 0) mod.tickFtHoF();
+                if (mod.ticks % 30 === 0) {
                     mod.tickFortune();
                     mod.tickLump();
                 }
                 if (mod.ticks % 150 === 0) mod.tickWrinklers();
+                
             });
 
             mod.createToggleUI();
@@ -66,11 +71,11 @@
                 if (typeof data.wrathClick === 'boolean')  this.settings.wrathClick = data.wrathClick;
                 if (typeof data.fthofEnabled === 'boolean') this.settings.fthofEnabled = data.fthofEnabled;
                 if (typeof data.reindeerClick === 'boolean') this.settings.reindeerClick = data.reindeerClick;
-                if (typeof data.eldeerClick === 'boolean') this.settings.eldeerClick = data.eldeerClick;
+                if (typeof data.deermaxClick === 'boolean') this.settings.deermaxClick = data.deermaxClick;
 
                 // Enforce exclusivity if a save somehow has both on
-                if (this.settings.reindeerClick && this.settings.reindeerElderOnly) {
-                    this.settings.reindeerElderOnly = false;
+                if (this.settings.reindeerClick && this.settings.deermaxClick) {
+                    this.settings.deermaxClick = false;
                 }
             } catch (e) {
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
@@ -78,21 +83,50 @@
             this.toggleButtons.forEach(function (refresh) { refresh(); });
         },
 
-        // Pops golden cookies, and wrath cookies during grandmapocalypse (only while a reindeer is on screen for the wrath case).
+        setReindeerMode: function (key, on) {
+            const s = this.settings;
+            s.reindeerClick = false;
+            s.reindeerWait = false;
+            if (on) s[key] = true;
+            this.toggleButtons.forEach(function (refresh) { refresh(); });
+        },
+
+        // True if any golden or wrath cookie is on screen
+        goldenPending: function () {
+            const s = this.settings;
+            return Game.shimmers.some(function (sh) {
+                return sh.type === 'golden' && (sh.wrath === 0 ? s.goldenClick : s.wrathClick);
+            });
+        },
+
+        // Handles auto-clicking golden and wrath cookies with reindeer wait logic
         tickGolden: function () {
-            const popGolden = this.settings.goldenClick;
-            const popWrath = this.settings.wrathClick;
-            if (!popGolden && !popWrath) return;
+            const s = this.settings;
+            if (!s.goldenClick && !s.wrathClick) return;
 
-            const shimmers = Game.shimmers.slice(); // copy: popping mutates the array
-            const reindeerOnScreen = shimmers.some(function (s) { return s.type === 'reindeer'; });
+            const shimmers = Game.shimmers.slice();
+            const reindeer = shimmers.filter(function (sh) { return sh.type === 'reindeer'; });
 
-            shimmers.forEach(function (shimmer) {
-                if (shimmer.type !== 'golden') return;
-                if (shimmer.wrath === 0) {
-                    if (popGolden) shimmer.pop();
-                } else if (popWrath) {
-                    shimmer.pop();
+            // Seconds until the soonest reindeer leaves the screen
+            const reindeerLeft = reindeer.length
+                ? Math.min.apply(null, reindeer.map(function (r) { return r.life / Game.fps; })) : Infinity;
+
+            const waiting = s.reindeerWait && reindeer.length > 0;
+            const mod = this;
+
+            shimmers.forEach(function (sh) {
+                if (sh.type !== 'golden') return;
+
+                const wanted = (sh.wrath === 0) ? s.goldenClick : s.wrathClick;
+                if (!wanted) return;
+
+                // Not waiting: pop straight away
+                if (!waiting) { sh.pop(); return; }
+
+                // Waiting: same rule for golden and wrath cookies
+                const cookieLeft = sh.life / Game.fps;
+                if (cookieLeft <= mod.GOLDEN_LAST_SECOND || reindeerLeft <= mod.REINDEER_EXIT_MARGIN) {
+                    sh.pop();
                 }
             });
         },
@@ -100,17 +134,16 @@
         // Auto pops reindeer
         tickReindeer: function () {
             const s = this.settings;
-            if (!s.reindeerClick && !s.reindeerElderOnly) return;
+            if (!s.reindeerClick && !s.reindeerWait) return;
 
-            if (s.reindeerElderOnly) {
-                const elderFrenzy = Object.keys(Game.buffs).some(function (name) {
-                    return name.toLowerCase() === 'elder frenzy';
-                });
-                if (!elderFrenzy) return;
-            }
+            // Wait mode: hold reindeer while any golden/wrath cookie is on screen
+            const hold = s.reindeerWait && this.goldenPending();
+            const margin = this.REINDEER_EXIT_MARGIN;
 
             Game.shimmers.slice().forEach(function (shimmer) {
-                if (shimmer.type === 'reindeer') shimmer.pop();
+                if (shimmer.type !== 'reindeer') return;
+                if (hold && shimmer.life / Game.fps > margin) return; // let cookies go first
+                shimmer.pop();
             });
         },
 
@@ -294,15 +327,15 @@
                 function () { return mod.settings.reindeerClick; },
                 function (v) {
                     mod.settings.reindeerClick = v;
-                    if (v) mod.settings.reindeerElderOnly = false;
+                    if (v) mod.settings.deermaxClick = false;
                     mod.toggleButtons.forEach(function (refresh) { refresh(); });
                 },
                 null);
 
-            mod.createToggle(container, 'Eldeer',
-                function () { return mod.settings.reindeerElderOnly; },
+            mod.createToggle(container, 'Deermaxxing',
+                function () { return mod.settings.deermaxClick; },
                 function (v) {
-                    mod.settings.reindeerElderOnly = v;
+                    mod.settings.deermaxClick = v;
                     if (v) mod.settings.reindeerClick = false;
                     mod.toggleButtons.forEach(function (refresh) { refresh(); });
                 },
