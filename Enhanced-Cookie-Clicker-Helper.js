@@ -17,8 +17,8 @@
 
         // Config
         NOTIFY_ON_CAST: false,
-        GOLDEN_LAST_SECOND: 2,
-        REINDEER_EXIT_MARGIN: 2,
+        GOLDEN_LAST_SECOND: 1,
+        REINDEER_EXIT_MARGIN: 1,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
 
         // Internals
@@ -83,14 +83,6 @@
             this.toggleButtons.forEach(function (refresh) { refresh(); });
         },
 
-        setReindeerMode: function (key, on) {
-            const s = this.settings;
-            s.reindeerClick = false;
-            s.reindeerWait = false;
-            if (on) s[key] = true;
-            this.toggleButtons.forEach(function (refresh) { refresh(); });
-        },
-
         // True if any golden or wrath cookie is on screen
         goldenPending: function () {
             const s = this.settings;
@@ -111,7 +103,7 @@
             const reindeerLeft = reindeer.length
                 ? Math.min.apply(null, reindeer.map(function (r) { return r.life / Game.fps; })) : Infinity;
 
-            const waiting = s.reindeerWait && reindeer.length > 0;
+            const waiting = s.deermaxClick && reindeer.length > 0;
             const mod = this;
 
             shimmers.forEach(function (sh) {
@@ -134,10 +126,10 @@
         // Auto pops reindeer
         tickReindeer: function () {
             const s = this.settings;
-            if (!s.reindeerClick && !s.reindeerWait) return;
+            if (!s.reindeerClick && !s.deermaxClick) return;
 
             // Wait mode: hold reindeer while any golden/wrath cookie is on screen
-            const hold = s.reindeerWait && this.goldenPending();
+            const hold = s.deermaxClick && this.goldenPending();
             const margin = this.REINDEER_EXIT_MARGIN;
 
             Game.shimmers.slice().forEach(function (shimmer) {
