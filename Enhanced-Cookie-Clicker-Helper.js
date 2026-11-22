@@ -122,6 +122,13 @@
                 }
             });
         },
+        
+        cpsBuffActive: function () {
+            for (const name in Game.buffs) {
+                if (Game.buffs[name].multCpS > 1) return true;
+            }
+            return false;
+        },
 
         // Auto pops reindeer
         tickReindeer: function () {
@@ -192,7 +199,7 @@
         },
         
         // Checks if any active buff is a combo trigger for Force the Hand of Fate.
-        cpsBuffActive: function () {
+        hasComboTriggerBuff: function () {
             for (const name in Game.buffs) {
                 const buff = Game.buffs[name];
                 if (this.COMBO_BUFF_NAMES.has(name.toLowerCase())) return true;
@@ -223,7 +230,7 @@
             const grimoire = this.getGrimoire();
             if (!grimoire) return;
             if (!this.isAtMaxMana(grimoire)) return;
-            if (!this.cpsBuffActive()) return;
+            if (!this.hasComboTriggerBuff()) return;
             if (!this.canAffordFtHoF(grimoire)) return;
 
             const spell = grimoire.spells['hand of fate'];
