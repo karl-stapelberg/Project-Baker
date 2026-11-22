@@ -10,7 +10,9 @@
             autoClick: false,
             goldenClick: true,
             wrathClick: false,
-            fthofEnabled: true
+            fthofEnabled: true,
+            reindeerClick: true,
+            eldeerClick: false
         },
 
         // Config
@@ -63,6 +65,13 @@
                 if (typeof data.goldenClick === 'boolean') this.settings.goldenClick = data.goldenClick;
                 if (typeof data.wrathClick === 'boolean')  this.settings.wrathClick = data.wrathClick;
                 if (typeof data.fthofEnabled === 'boolean') this.settings.fthofEnabled = data.fthofEnabled;
+                if (typeof data.reindeerClick === 'boolean') this.settings.reindeerClick = data.reindeerClick;
+                if (typeof data.eldeerClick === 'boolean') this.settings.eldeerClick = data.eldeerClick;
+
+                // Enforce exclusivity if a save somehow has both on
+                if (this.settings.reindeerClick && this.settings.reindeerElderOnly) {
+                    this.settings.reindeerElderOnly = false;
+                }
             } catch (e) {
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
             }
@@ -82,7 +91,7 @@
                 if (shimmer.type !== 'golden') return;
                 if (shimmer.wrath === 0) {
                     if (popGolden) shimmer.pop();
-                } else if (popWrath && Game.elderWrath > 0 && reindeerOnScreen) {
+                } else if (popWrath) {
                     shimmer.pop();
                 }
             });
@@ -90,6 +99,16 @@
 
         // Auto pops reindeer
         tickReindeer: function () {
+            const s = this.settings;
+            if (!s.reindeerClick && !s.reindeerElderOnly) return;
+
+            if (s.reindeerElderOnly) {
+                const elderFrenzy = Object.keys(Game.buffs).some(function (name) {
+                    return name.toLowerCase() === 'elder frenzy';
+                });
+                if (!elderFrenzy) return;
+            }
+
             Game.shimmers.slice().forEach(function (shimmer) {
                 if (shimmer.type === 'reindeer') shimmer.pop();
             });
@@ -269,6 +288,24 @@
             mod.createToggle(container, 'Auto FtHoF',
                 function () { return mod.settings.fthofEnabled; },
                 function (v) { mod.settings.fthofEnabled = v; },
+                null);
+            
+            mod.createToggle(container, 'Reindeer',
+                function () { return mod.settings.reindeerClick; },
+                function (v) {
+                    mod.settings.reindeerClick = v;
+                    if (v) mod.settings.reindeerElderOnly = false;
+                    mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                },
+                null);
+
+            mod.createToggle(container, 'Eldeer',
+                function () { return mod.settings.reindeerElderOnly; },
+                function (v) {
+                    mod.settings.reindeerElderOnly = v;
+                    if (v) mod.settings.reindeerClick = false;
+                    mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                },
                 null);
 
             document.body.appendChild(container);
