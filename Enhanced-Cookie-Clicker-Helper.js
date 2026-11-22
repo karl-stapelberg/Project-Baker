@@ -3,15 +3,6 @@
 (function () {
     const MOD_ID = 'Enhanced Cookie Clicker Helper';
 
-    // Wait until the game exists and has finished loading
-    (function waitForGame() {
-        if (typeof Game !== 'undefined' && Game.ready && document.body) {
-            register();
-        } else {
-            setTimeout(waitForGame, 500);
-        }
-    })();
-
     Game.registerMod(MOD_ID, {
 
         // State (persisted via save/load)
@@ -264,7 +255,7 @@
                 function (v) { mod.settings.autoClick = v; },
                 null);
 
-            mod.createToggle(container, 'Golden/Wrath Cookies',
+            mod.createToggle(container, 'Golden Cookies',
                 function () { return mod.settings.goldenClick; },
                 function (v) { mod.settings.goldenClick = v; },
                 null);
