@@ -326,8 +326,21 @@
             ].join(';');
 
             mod.createToggle(container, 'Auto-Click',
-                function () { return mod.settings.autoClick; },
-                function (v) { mod.settings.autoClick = v; },
+                    function () { return mod.settings.autoClick; },
+                    function (v) {
+                        mod.settings.autoClick = v;
+                        if (v) mod.settings.autoPet = false;
+                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                    },
+            null);
+
+            mod.createToggle(container, 'Auto-Pet Krumblor',
+                    function () { return mod.settings.autoPet; },
+                    function (v) {
+                        mod.settings.autoPet = v;
+                        if (v) mod.settings.autoClick = false;
+                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                    },
             null);
 
             mod.createToggle(container, 'Golden Cookies',
@@ -361,24 +374,6 @@
                     if (v) mod.settings.reindeerClick = false;
                     mod.toggleButtons.forEach(function (refresh) { refresh(); });
                 },
-            null);
-
-            mod.createToggle(container, 'Auto-Click',
-                    function () { return mod.settings.autoClick; },
-                    function (v) {
-                        mod.settings.autoClick = v;
-                        if (v) mod.settings.autoPet = false;
-                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
-                    },
-            null);
-
-            mod.createToggle(container, 'Auto-Pet Krumblor',
-                    function () { return mod.settings.autoPet; },
-                    function (v) {
-                        mod.settings.autoPet = v;
-                        if (v) mod.settings.autoClick = false;
-                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
-                    },
             null);
 
             document.body.appendChild(container);
