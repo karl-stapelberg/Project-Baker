@@ -88,13 +88,13 @@
                 if (typeof data.fthofEnabled === 'boolean') this.settings.fthofEnabled = data.fthofEnabled;
                 if (typeof data.reindeerClick === 'boolean') this.settings.reindeerClick = data.reindeerClick;
                 if (typeof data.deermaxClick === 'boolean') this.settings.deermaxClick = data.deermaxClick;
+                if (typeof data.autoPet === 'boolean') this.settings.autoPet = data.autoPet;
 
                 // Enforce exclusivity if a save somehow has both on
                 if (this.settings.reindeerClick && this.settings.deermaxClick) {
                     this.settings.deermaxClick = false;
                 }
 
-                if (typeof data.autoPet === 'boolean') this.settings.autoPet = data.autoPet;
                 // Enforce exclusivity if a save somehow has both on
                 if (this.settings.autoClick && this.settings.autoPet) {
                     this.settings.autoPet = false;
