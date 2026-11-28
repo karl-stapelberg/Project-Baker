@@ -1,5 +1,10 @@
 // Enhanced Cookie Clicker Helper
 // Load with: Game.LoadMod('https://cdn.jsdelivr.net/gh/karl-stapelberg/Project-Baker@main/Enhanced-Cookie-Clicker-Helper.js');
+
+// TODO:
+// Add cyclius automation
+// Add dragon petting automation
+
 (function () {
     const MOD_ID = 'Enhanced Cookie Clicker Helper';
 
@@ -12,7 +17,8 @@
             wrathClick: false,
             fthofEnabled: true,
             reindeerClick: true,
-            deermaxClick: false
+            deermaxClick: false,
+            autoPet: false,
         },
 
         // Config
@@ -20,10 +26,12 @@
         GOLDEN_LAST_SECOND: 2,
         REINDEER_EXIT_MARGIN: 2,
         COMBO_BUFF_NAMES: new Set(['frenzy', 'dragon harvest', 'elder frenzy', 'click frenzy']),
+        PET_INTERVAL_MS: 50,
 
         // Internals
         ticks: 0,
         autoClickHandle: null,
+        autoPetHandle: null,
         toggleButtons: [],
 
         // Mod lifecycle
@@ -34,6 +42,14 @@
             mod.autoClickHandle = setInterval(function () {
                 if (mod.settings.autoClick) Game.ClickCookie();
             }, 4);
+
+            // Auto-pet Krumblor
+            mod.autoPetHandle = setInterval(function () {
+                if (!mod.settings.autoPet) return;
+                if (typeof Game.ClickSpecialPic !== 'function') return;
+                if (!Game.Has('Pet the dragon')) return;   // upgrade needed before petting does anything
+                Game.ClickSpecialPic();
+            }, mod.PET_INTERVAL_MS);
 
             // All other automation runs on the game's own logic tick
             Game.registerHook('logic', function () {
@@ -77,10 +93,17 @@
                 if (this.settings.reindeerClick && this.settings.deermaxClick) {
                     this.settings.deermaxClick = false;
                 }
+
+                // Enforce exclusivity if a save somehow has both on
+                if (this.settings.autoClick && this.settings.autoPet) {
+                    this.settings.autoPet = false;
+                }
             } catch (e) {
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
             }
             this.toggleButtons.forEach(function (refresh) { refresh(); });
+
+            if (typeof data.autoPet === 'boolean') this.settings.autoPet = data.autoPet;
         },
 
         // True if any golden or wrath cookie is on screen
@@ -305,22 +328,22 @@
             mod.createToggle(container, 'Auto-Click',
                 function () { return mod.settings.autoClick; },
                 function (v) { mod.settings.autoClick = v; },
-                null);
+            null);
 
             mod.createToggle(container, 'Golden Cookies',
                 function () { return mod.settings.goldenClick; },
                 function (v) { mod.settings.goldenClick = v; },
-                null);
+            null);
 
             mod.createToggle(container, 'Wrath Cookies',
                 function () { return mod.settings.wrathClick; },
                 function (v) { mod.settings.wrathClick = v; },
-                null);
+            null);
 
             mod.createToggle(container, 'Auto FtHoF',
                 function () { return mod.settings.fthofEnabled; },
                 function (v) { mod.settings.fthofEnabled = v; },
-                null);
+            null);
             
             mod.createToggle(container, 'Reindeer',
                 function () { return mod.settings.reindeerClick; },
@@ -329,7 +352,7 @@
                     if (v) mod.settings.deermaxClick = false;
                     mod.toggleButtons.forEach(function (refresh) { refresh(); });
                 },
-                null);
+            null);
 
             mod.createToggle(container, 'Deermaxxing',
                 function () { return mod.settings.deermaxClick; },
@@ -338,7 +361,25 @@
                     if (v) mod.settings.reindeerClick = false;
                     mod.toggleButtons.forEach(function (refresh) { refresh(); });
                 },
-                null);
+            null);
+
+            mod.createToggle(container, 'Auto-Click',
+                    function () { return mod.settings.autoClick; },
+                    function (v) {
+                        mod.settings.autoClick = v;
+                        if (v) mod.settings.autoPet = false;
+                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                    },
+            null);
+
+            mod.createToggle(container, 'Auto-Pet Krumblor',
+                    function () { return mod.settings.autoPet; },
+                    function (v) {
+                        mod.settings.autoPet = v;
+                        if (v) mod.settings.autoClick = false;
+                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                    },
+            null);
 
             document.body.appendChild(container);
         }
