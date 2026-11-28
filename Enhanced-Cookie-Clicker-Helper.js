@@ -94,6 +94,7 @@
                     this.settings.deermaxClick = false;
                 }
 
+                if (typeof data.autoPet === 'boolean') this.settings.autoPet = data.autoPet;
                 // Enforce exclusivity if a save somehow has both on
                 if (this.settings.autoClick && this.settings.autoPet) {
                     this.settings.autoPet = false;
@@ -102,8 +103,6 @@
                 console.warn('[' + MOD_ID + '] could not parse saved settings.', e);
             }
             this.toggleButtons.forEach(function (refresh) { refresh(); });
-
-            if (typeof data.autoPet === 'boolean') this.settings.autoPet = data.autoPet;
         },
 
         // True if any golden or wrath cookie is on screen
@@ -326,21 +325,21 @@
             ].join(';');
 
             mod.createToggle(container, 'Auto-Click',
-                    function () { return mod.settings.autoClick; },
-                    function (v) {
-                        mod.settings.autoClick = v;
-                        if (v) mod.settings.autoPet = false;
-                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
-                    },
+                function () { return mod.settings.autoClick; },
+                function (v) {
+                    mod.settings.autoClick = v;
+                    if (v) mod.settings.autoPet = false;
+                    mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                },
             null);
 
             mod.createToggle(container, 'Auto-Pet Krumblor',
-                    function () { return mod.settings.autoPet; },
-                    function (v) {
-                        mod.settings.autoPet = v;
-                        if (v) mod.settings.autoClick = false;
-                        mod.toggleButtons.forEach(function (refresh) { refresh(); });
-                    },
+                function () { return mod.settings.autoPet; },
+                function (v) {
+                    mod.settings.autoPet = v;
+                    if (v) mod.settings.autoClick = false;
+                    mod.toggleButtons.forEach(function (refresh) { refresh(); });
+                },
             null);
 
             mod.createToggle(container, 'Golden Cookies',
